@@ -1,11 +1,7 @@
-﻿using AutoMapper;
-using DogeNet.NetworkingTools;
-using DogeNet.NetworkingTools.Abstractions;
+﻿using DogeNetCore.DataAccess.Extensions;
+using DogeNetCore.StorageProviders.AzureTableStorage.Extensions;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
-using UsersFunctions.AutoMapperProfiles;
-using UsersFunctions.Commands;
-using UsersFunctions.Commands.Abstractions;
+using UsersService.Extensions;
 
 [assembly: FunctionsStartup(typeof(UsersFunctions.Startup))]
 namespace UsersFunctions
@@ -14,9 +10,10 @@ namespace UsersFunctions
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            builder.Services.AddSingleton<ISerializer, JsonNetSerializer>();
-            builder.Services.AddSingleton<IGetUsersCommand, GetUsersCommand>();
-            builder.Services.AddAutoMapper(typeof(UsersProfile).Assembly);
+            var services = builder.Services;
+            services.AddUsersAzureTableProvider();
+            services.AddUsersRepository();
+            services.AddUsersService();
         }
     }
 }

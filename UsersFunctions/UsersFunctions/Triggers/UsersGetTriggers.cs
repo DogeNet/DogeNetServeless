@@ -1,34 +1,43 @@
-using AutoMapper;
-using DogeNet.NetworkingTools.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Logging;
-using UsersFunctions.Commands.Abstractions;
-using UsersFunctions.ViewModels;
+using System.Linq;
+using System.Threading.Tasks;
+using UsersFunctions.Extensions;
+using UsersFunctions.ViewModels.Requests;
+using UsersFunctions.ViewModels.Responses;
+using UsersService.Abstractions;
 
 namespace UsersFunctions.Controllers
 {
     public class UsersGetTriggers
     {
-        private readonly IGetUsersCommand _getUsersCommand;
-        private readonly ISerializer _serializer;
-        private readonly IMapper _mapper;
-        public UsersGetTriggers(IGetUsersCommand getUsersCommand, ISerializer serializer, IMapper mapper)
+        private readonly IUsersService _usersService;
+        public UsersGetTriggers(IUsersService usersService)
         {
-            _getUsersCommand = getUsersCommand;
-            _serializer = serializer;
-            _mapper = mapper;
+            _usersService = usersService;
         }
         [FunctionName("GetUsersFunction")]
-        public IActionResult Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "users")] HttpRequest req,
-            ILogger log)
+        public async Task<IActionResult> GetUser(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "users")] HttpRequest req)
         {
-            var Response = _getUsersCommand.GetUsers();
-            var ViewModelResponse = _mapper.Map<UsersViewModel>(Response);
-            return new OkObjectResult(ViewModelResponse);
+            var result = await _usersService.GetUsersAsync();
+
+            var response = new GetUsersResponse
+            {
+                Users = result.Select(p => p.MapToUsersViewModel()).ToList()
+            };
+            return new OkObjectResult(response);
+        }
+
+        [FunctionName("CreateUserFunction")]
+        public async Task<IActionResult> CreateUser(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "users")] CreateUserRequest request)
+        {
+            var user = request.User.MapToUser();
+            await _usersService.AddUserAsync(user);
+            return new CreatedResult($"/{user.DogeId}",user);
         }
     }
 }

@@ -1,9 +1,9 @@
 ﻿namespace UsersFunctions.ViewModels.Data
 {
-    public class User
+    public class UsersViewModel
     {
         public string Username { get; set; }
-        public int DogeID { get; set; }
+        public int DogeId { get; set; }
         public int Score { get; set; }
     }
 }
